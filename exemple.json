@@ -1,0 +1,11 @@
+{
+    "email" : "myisjeff@gmail.com",
+    "password": "umbelibeble",
+    "sport": "tennis",
+    "date": {
+        "time": "16:30",
+        "day": "20",
+        "month": "03",
+        "year": "2024"
+    }
+}

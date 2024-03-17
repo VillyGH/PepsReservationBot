@@ -1,0 +1,5 @@
+config.json
+node_modules/
+screenshots/*
+user_data/
+package-lock.json
