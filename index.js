@@ -99,10 +99,19 @@ async function reservationPage(page) {
     console.log("Loading reservation page");
     let selector = '#radioRaquette2';
     await page.waitForSelector(selector);
-    if(config.double) {
+    await selectPartner(page, 0, config.ni_partenaire1);
+    if(config.ni_partenaire2 && config.ni_partenaire3) {
         await page.click(selector);
+        await selectPartner(page, 1, config.ni_partenaire2);
+        await selectPartner(page, 2, config.ni_partenaire3);
     }
-    selector = 'select[name="ddlPartenaire0"]';
+    await page.click('input[type="submit"]');
+    
+    await page.screenshot({ path: "screenshots/ReservationPage.jpg" });
+}
+
+async function selectPartner(page, partnerId, partnerNI){
+    let selector = `select[name="ddlPartenaire${partnerId}"]`;
     const selectElement = await page.waitForSelector(selector);
     const options = await selectElement.$$eval('option', options => {
         return Array.from(options, option => {
@@ -112,17 +121,11 @@ async function reservationPage(page) {
             };
         });
     });
-    const option = options.find(option => option.text.includes(config.ni_partenaire));
+    const option = options.find(option => option.text.includes(partnerNI));
     if (option) {
-        await page.select(selector, );
-        selector = `option[value='${option.value}']`;
-        await page.waitForSelector(selector);
-        page.evaluate((optionSelector) => {
-            document.querySelector(optionSelector).click();
-        }, selector);
+        await page.select(selector, option.value);
     } else {
         console.log("Partner NI invalid please change it in the config file");
         process.exit(1);
     }
-    await page.screenshot({ path: "screenshots/ReservationPage.jpg" });
 }
