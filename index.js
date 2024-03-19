@@ -24,9 +24,7 @@ async function connexion(page) {
     console.log("Loading connexion page");
     await page.type("#Email", config.email);
     await page.type("#Password", config.password);
-    //await page.screenshot({ path: "screenshots/connexionPage.jpg" });
     await page.click('input[type="submit"]');
-    //await page.screenshot({ path: "screenshots/connectedPage.jpg" });
     console.log("Connected");
 }
 
@@ -37,7 +35,6 @@ async function datePage(page) {
     await page.click(selector)
     selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
     await page.waitForSelector(selector);
-    //await page.screenshot({ path: "screenshots/datePage.jpg" });
     try {
         await page.evaluate((selector) => {
             document.querySelector(selector).click();
@@ -52,7 +49,6 @@ async function sportsPage(page) {
     console.log("Loading sports page");
     let selector = `a[href='/rtpeps/Reservation/Disponibilites?selectedActivite=${config.sport}']`;
     await page.waitForSelector(selector);
-    await page.screenshot({path: "screenshots/SportsPage.jpg"});
     try {
         await page.click(selector);
     } catch (e) {
@@ -65,7 +61,6 @@ async function schedulePage(page) {
     console.log("Loading schedule page");
     let selector = 'tr:not(tr[style="display:none;"]):not(.strong)';
     await page.waitForSelector(selector);
-    await page.screenshot({path: "screenshots/SchedulePage.jpg"});
     const data = await page.$$eval(selector, rows => {
         return Array.from(rows, row => {
             const columns = row.querySelectorAll('td');
@@ -104,8 +99,6 @@ async function reservationPage(page) {
         await selectPartner(page, 2, config.partner_ni3);
     }
     await page.click('input[type="submit"]');
-    
-    await page.screenshot({path: "screenshots/ReservationPage.jpg"});
 }
 
 async function selectPartner(page, partnerId, partnerNI) {
