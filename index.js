@@ -11,16 +11,11 @@ import config from "./config.json" assert {type: "json"};
     });
     
     const page = await browser.newPage();
-    page.on('console', msg => {
-        for (let i = 0; i < msg.args().length; i++) {
-            console.log(msg.args()[i]);
-        }
-    });
     await page.goto("https://secure.sas.ulaval.ca/rtpeps/Account/Login");
     await connexion(page);
     await datePage(page);
     await sportsPage(page);
-    await reservationPage(page);
+    await schedulePage(page);
 })();
 
 async function connexion(page) {
@@ -65,22 +60,25 @@ async function sportsPage(page) {
     }
 }
 
-async function reservationPage(page) {
-    console.log("Loading reservation page");
-    let selector = 'tr:not(tr[style="display:none;"]):not(.strong)>td:nth-child(2)';
+async function schedulePage(page) {
+    console.log("Loading schedule page");
+    let selector = 'tr:not(tr[style="display:none;"]):not(.strong)';
     await page.waitForSelector(selector);
-    await page.screenshot({ path: "screenshots/TimePage.jpg" });
-    const tds = await page.$$(selector);
+    await page.screenshot({ path: "screenshots/SchedulePage.jpg" });
+    const data = await page.$$eval(selector, rows => {
+        return Array.from(rows, row => {
+            const columns = row.querySelectorAll('td');
+            return {
+                time: columns[1].innerText,
+                btnHref: columns[4].querySelector('a').getAttribute("href"),
+            };
+        });
+    });
     let found = false;
-    for (let i = 0;i < tds.length; i++) {
-        const time = await (await tds[i].getProperty('innerText')).jsonValue();
-        if (time === config.date.time) {
-            const bookBtn = await page.$((selector) => {
-                document.querySelector(selector).click();
-            }, selector);
-            await page.click(bookBtn);
+    for (let i = 0;i < data.length; i++) {
+        if (data[i].time === config.date.time) {
+            await page.click(`a[href='${data[i].btnHref}']`);
             found = true;
-            await page.screenshot({ path: "screenshots/ReservationPage.jpg" });
             break;
         }
     }
@@ -88,5 +86,5 @@ async function reservationPage(page) {
         console.log("The specified reservation hour is not available for that specific date");
         process.exit(1);
     }
-    await page.screenshot({ path: "screenshots/ReservationPage.jpg" });
+    process.exit(0);
 }
