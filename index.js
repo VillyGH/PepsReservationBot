@@ -76,7 +76,7 @@ async function schedulePage(page) {
     for (let i = 0; i < data.length; i++) {
         if (data[i].time === config.date.time) {
             console.log(`Found ${data[i].location} Terrain ${data[i].terrain}`);
-            await page.click(`a[href='${data[i].btnHref}']`, true);
+            await page.$eval(`a[href='${data[i].btnHref}']`, element => element.click());
             found = true;
             break;
         }
@@ -98,7 +98,11 @@ async function reservationPage(page) {
         await selectPartner(page, 1, config.partner_ni2);
         await selectPartner(page, 2, config.partner_ni3);
     }
-    await page.click('input[type="submit"]');
+    await page.waitForSelector(`input:enabled[type="submit"]`);
+    await page.$eval(`input:enabled[type="submit"]`, element => element.click());
+    await page.waitForSelector("#bienvenue");
+    console.log(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
+    process.exit(0);
 }
 
 async function selectPartner(page, partnerId, partnerNI) {
@@ -116,7 +120,7 @@ async function selectPartner(page, partnerId, partnerNI) {
     if (option) {
         await page.select(selector, option.value);
     } else {
-        console.log("Partner NI invalid please change it in the config file");
+        console.log("Partner NI invalid please check the config.json file");
         process.exit(1);
     }
 }
