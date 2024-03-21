@@ -9,7 +9,7 @@ Ce script automatise le processus de réservation de terrains au PEPS de l'Unive
 1. **Configuration:** Le script nécessite un fichier de configuration nommé `config.json` contenant les informations suivantes:
     - `email`: Votre adresse courriel associée à votre compte PEPS
     - `password`: Votre mot de passe PEPS
-    - `sport`: Le sport pour lequel vous souhaitez réserver un terrain (ex: "Tennis") IMPORTANT: Doit Débuter par une MAJUSCULE
+    - `sport`: Le sport pour lequel vous souhaitez réserver un terrain (ex: "Tennis") **IMPORTANT**: Doit Débuter par une **MAJUSCULE**
     - `partner_ni1`: Le NI (numéro d'identification) de votre premier partenaire de réservation (nombre de 9 chiffres)
     - `partner_ni2`: Le NI de votre deuxième partenaire de réservation (optionnel)
     - `partner_ni3`: Le NI de votre troisième partenaire de réservation (optionnel)
@@ -23,14 +23,14 @@ Ce script automatise le processus de réservation de terrains au PEPS de l'Unive
 4. **Sélection de la date:** Le script sélectionne la date de réservation spécifiée dans `config.json`. Si la date est invalide (passée), le script s'arrêtera avec un message d'erreur.
 5. **Sélection du sport:** Le script sélectionne le sport spécifié dans `config.json`. Si le sport n'est pas disponible pour la date sélectionnée, le script s'arrêtera avec un message d'erreur.
 6. **Sélection du créneau horaire:** Le script recherche un créneau horaire correspondant à l'heure spécifiée dans `config.json`. Si l'heure n'est pas disponible, le script s'arrêtera avec un message d'erreur.
-7. **Sélection des partenaires:** Le script sélectionne le premier partenaire de réservation en utilisant le NI fourni dans `config.json`. Si des NI de partenaires supplémentaires sont fournis, le script les sélectionnera également. Si un NI de partenaire est invalide, le script s'arrêtera avec un message d'erreur.
+7. **Sélection des partenaires:** Le script sélectionne le premier partenaire de réservation en utilisant le NI fourni dans `config.json`. Si deux autres NI de partenaires supplémentaires sont fournis, le script les sélectionnera également. Si un NI de partenaire est invalide, le script s'arrêtera avec un message d'erreur.
 8. **Confirmation de réservation:** Le script confirme la réservation du terrain.
 
 **Prérequis**
 
 - Node.js et npm installés sur votre machine
-- `puppeteer` installé globalement: `npm install -g puppeteer`
-- Ajout d'un fichier de configuration nommé `config.json` comme mentionné plus haut
+- Installation des packages avec la commande `npm install`
+- Ajout d'un fichier de configuration nommé `config.json` comme mentionné plus haut selon l'exemple donné dans le fichier `config-exemple.json`
 
 **Notes**
 
