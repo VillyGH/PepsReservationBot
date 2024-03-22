@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
 import config from "./config.json" assert {type: "json"};
-import {click} from "./utils.js";
+import {click, timeToMs} from "./utils.js";
+import { setTimeout } from "timers/promises";
 
 
 (async () => {
@@ -70,7 +71,8 @@ async function schedulePage(page) {
                     location: columns[0].innerText,
                     time: columns[1].innerText,
                     terrain: columns[3].innerText,
-                    btnHref: columns[4].querySelector('a').getAttribute("href"),
+                    dataCountdown: columns[4].querySelector('.dataCountdown') ? columns[4].querySelector('.dataCountdown').innerText : null,
+                    btnHref: columns[4].querySelector('.dataCountdown') ? columns[4].querySelector('.linkReserverHide > a').getAttribute("href") : columns[4].querySelector('a').getAttribute("href")
                 };
             });
         });
@@ -80,6 +82,10 @@ async function schedulePage(page) {
     let found = false;
     for (let i = 0; i < data.length; i++) {
         if (data[i].time === config.date.time) {
+            if(data[i].dataCountdown) {
+                console.log(`Waiting for the reservation to open in ${data[i].dataCountdown}`);
+                await setTimeout(timeToMs(data[i].dataCountdown));
+            }
             selector = `a[href='${data[i].btnHref}']`;
             console.log(`Found ${data[i].location} Terrain ${data[i].terrain}`);
             await click(page, selector);
