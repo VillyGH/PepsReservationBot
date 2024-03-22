@@ -16,7 +16,7 @@ $reservationTimeStamp = Get-Date -Date $dateTime
 $executionTimeStamp = $reservationTimeStamp.AddHours(-70)
 
 # Vérification si l'heure d'exécution est avant l'heure de réservation
-if ((Get-Date $executionTimeStamp) -gt (Get-Date)) {
+if ((Get-Date) -gt (Get-Date $executionTimeStamp)) {
     Write-Error "Erreur: l'heure d'execution du programme doit être 70 heure avant l'heure de la réservation"
     exit 1
 }
