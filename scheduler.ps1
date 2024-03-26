@@ -1,7 +1,9 @@
-$scriptPath = "./index.js"
+$configFile = "./config.json"
+$scriptName = "index.js"
+
 
 try {
-    $config = Get-Content "./config.json" -Raw | ConvertFrom-Json
+    $config = Get-Content $configFile -Raw | ConvertFrom-Json
     $reservationTime = $config.date.time
     $reservationDate = $config.date.year + "-" + $config.date.month + "-" + $config.date.day
 
@@ -25,6 +27,8 @@ $executionTimeStampStr = $executionTimeStamp.ToString()
 $executionTimeStrSplit = $executionTimeStampStr.Split()[0, 1]
 $executionDate = $executionTimeStrSplit[0]
 $executionTime = $executionTimeStrSplit[1]
-$schtasksCommand = "schtasks /create /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr $scriptPath /tn PepsReservationBot"
+
+$cmdPath = (get-command cmd.exe).Path
+$schtasksCommand = "schtasks /create /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr '$cmdPath /c cd $pwd && node $scriptName' /tn PepsReservationBot"
 Invoke-Expression $schtasksCommand
 Write-Output "Tâche planifiée pour lancer le script PepsReservationBot le $executionTimeStamp"
