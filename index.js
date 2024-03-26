@@ -8,7 +8,7 @@ import { setTimeout } from "timers/promises";
     console.log("Starting");
     const browser = await puppeteer.launch({
         userDataDir: "./user_data",
-        headless: false,
+        headless: !config.affichage,
         args: ["--no-sandbox"],
     });
     

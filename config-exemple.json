@@ -5,6 +5,7 @@
   "partner_ni1": "111111111",
   "partner_ni2": null,
   "partner_ni3": null,
+  "affichage": false,
   "date": {
     "time": "06:30",
     "day": "22",
