@@ -1,5 +1,5 @@
 $configFile = "./config.json"
-$scriptName = "index.js"
+$scriptName = "run.bat"
 
 
 try {
@@ -15,7 +15,7 @@ try {
 # 70 heures avant la réservation
 $dateTime = $reservationDate + " " + $reservationTime
 $reservationTimeStamp = Get-Date -Date $dateTime
-$executionTimeStamp = $reservationTimeStamp.AddHours(-70)
+$executionTimeStamp = $reservationTimeStamp.AddHours(-70).AddSeconds(-30)
 
 # Vérification si l'heure d'exécution est avant l'heure de réservation
 if ((Get-Date) -gt (Get-Date $executionTimeStamp)) {
@@ -23,12 +23,12 @@ if ((Get-Date) -gt (Get-Date $executionTimeStamp)) {
     exit 1
 }
 
+
 $executionTimeStampStr = $executionTimeStamp.ToString()
 $executionTimeStrSplit = $executionTimeStampStr.Split()[0, 1]
 $executionDate = $executionTimeStrSplit[0]
 $executionTime = $executionTimeStrSplit[1]
 
-$cmdPath = (get-command cmd.exe).Path
-$schtasksCommand = "schtasks /create /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr '$cmdPath /c cd $pwd && node $scriptName' /tn PepsReservationBot"
+$schtasksCommand = "schtasks /create /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr $pwd\$scriptName /tn PepsReservationBot"
 Invoke-Expression $schtasksCommand
 Write-Output "Tâche planifiée pour lancer le script PepsReservationBot le $executionTimeStamp"
