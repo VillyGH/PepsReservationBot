@@ -62,7 +62,6 @@ async function schedulePage(page) {
     console.log("Loading schedule page");
     let selector = 'tr:not(tr[style="display:none;"]):not(.strong)';
     await page.waitForSelector(selector);
-    await setTimeout(50);
     let data = null;
     try {
         data = await page.$$eval(selector, rows => {
@@ -80,25 +79,44 @@ async function schedulePage(page) {
     } catch (e) {
         console.log("No reservation is available for this day or you already reserved that day");
     }
-    let found = false;
-    for (let i = 0; i < data.length; i++) {
-        if (data[i].time === config.date.time) {
-            if(data[i].dataCountdown) {
-                console.log(`Waiting for the reservation to open in ${data[i].dataCountdown}`);
-                await setTimeout(timeToMs(data[i].dataCountdown) - 250);
-            }
-            selector = `a[href='${data[i].btnHref}']`;
-            console.log(`Found ${data[i].location} Terrain ${data[i].terrain}`);
-            await click(page, selector);
-            found = true;
-            break;
+    let index = findRowIndexWithTime(config.date.time, data);
+    if (data[index].time === config.date.time) {
+        if(data[index].dataCountdown) {
+            console.log(`Found ${data[index].location} Terrain ${data[index].terrain}`);
+            console.log(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
+            await setTimeout(timeToMs(data[index].dataCountdown) - 250);
+        }
+        let offset = utils.getOffset(data[index].dataCountdown);
+        while(!page.$('#radioRaquette2')) {
+            console.log(`click`);
+            clickEvent(offset.left, offset.top);
         }
     }
-    if (!found) {
+    if (!index) {
         console.log("The specified reservation hour is not available for that specific date");
         process.exit(1);
     }
-    
+}
+
+function clickEvent (x, y) {
+    const ev = new MouseEvent('click', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true,
+        'screenX': x,
+        'screenY': y
+    });
+    const el = document.elementFromPoint(x, y);
+    element.dispatchEvent(ev);
+}
+
+function findRowIndexWithTime(time, data) {
+    for (let i = 0; i < data.length; i++) {
+        if (data[i].time === time) {
+            return i;
+        }
+    }
+    return null;
 }
 
 async function reservationPage(page) {
