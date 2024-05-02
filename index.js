@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
 import config from "./config.json" assert {type: "json"};
-import {click, timeToMs} from "./utils.js";
+import {click, timeToMs, getOffset, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
 
 
@@ -26,17 +26,16 @@ async function connexion(page) {
     console.log("Loading connexion page");
     await page.type("#Email", config.email);
     await page.type("#Password", config.password);
-    await page.click('input[type="submit"]');
+    let selector = `input[type="submit"]`;
+    await click(page, selector);
     console.log("Connected");
 }
 
 async function datePage(page) {
     console.log("Loading date page");
     let selector = "a[href='/rtpeps/Reservation']";
-    await page.waitForSelector(selector);
-    await page.click(selector);
+    await click(page, selector);
     selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
-    await page.waitForSelector(selector);
     try {
         await click(page, selector);
         console.log(`Date found: ${config.date.day}/${config.date.month}/${config.date.year}`);
@@ -49,7 +48,6 @@ async function datePage(page) {
 async function sportsPage(page) {
     console.log("Loading sports page");
     let selector = `a[href='/rtpeps/Reservation/Disponibilites?selectedActivite=${config.sport}']`;
-    await page.waitForSelector(selector);
     try {
         await click(page, selector);
     } catch (e) {
@@ -71,7 +69,7 @@ async function schedulePage(page) {
                     location: columns[0].innerText,
                     time: columns[1].innerText,
                     terrain: columns[3].innerText,
-                    dataCountdown: columns[4].querySelector('.dataCountdown') ? columns[4].querySelector('.dataCountdown').innerText : null,
+                    dataCountdown: columns[4].querySelector('.dataCountdown') ? columns[4].querySelector('.dataCountdown') : null,
                     btnHref: columns[4].querySelector('.dataCountdown') ? columns[4].querySelector('.linkReserverHide > a').getAttribute("href") : columns[4].querySelector('a').getAttribute("href")
                 };
             });
@@ -80,21 +78,17 @@ async function schedulePage(page) {
         console.log("No reservation is available for this day or you already reserved that day");
     }
     let index = findRowIndexWithTime(config.date.time, data);
-    if (data[index].time === config.date.time) {
-        if(data[index].dataCountdown) {
-            console.log(`Found ${data[index].location} Terrain ${data[index].terrain}`);
-            console.log(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
-            await setTimeout(timeToMs(data[index].dataCountdown) - 250);
-        }
-        let offset = utils.getOffset(data[index].dataCountdown);
-        while(!page.$('#radioRaquette2')) {
+    if(data[index].dataCountdown) {
+        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
+        await setTimeout(timeToMs(data[index].dataCountdown.innerText) - 250);
+        let offset = getOffset(data[index].dataCountdown);
+        while(!(await page.$('#radioRaquette2'))) {
             console.log(`click`);
             clickEvent(offset.left, offset.top);
         }
-    }
-    if (!index) {
-        console.log("The specified reservation hour is not available for that specific date");
-        process.exit(1);
+    } else {
+        selector = `a[href='${data[index].btnHref}']`;
+        await click(page, selector);
     }
 }
 
@@ -108,15 +102,6 @@ function clickEvent (x, y) {
     });
     const el = document.elementFromPoint(x, y);
     element.dispatchEvent(ev);
-}
-
-function findRowIndexWithTime(time, data) {
-    for (let i = 0; i < data.length; i++) {
-        if (data[i].time === time) {
-            return i;
-        }
-    }
-    return null;
 }
 
 async function reservationPage(page) {
