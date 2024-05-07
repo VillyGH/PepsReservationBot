@@ -21,7 +21,7 @@ Ce script automatise le processus de réservation de terrains au PEPS de l'Unive
 2. **Exécution:** Exécutez le script en utilisant `node script.js`.
 3. **Connexion:** Le script se connecte automatiquement au portail de réservation PEPS en utilisant les informations de votre compte configurées dans `config.json`.
 4. **Sélection de la date:** Le script sélectionne la date de réservation spécifiée dans `config.json`. Si la date est invalide (passée), le script s'arrêtera avec un message d'erreur.
-5. **Sélection du sport:** Le script sélectionne le sport spécifié dans `config.json`. Si le sport n'est pas disponible pour la date sélectionnée, le script s'arrêtera avec un message d'erreur.
+5. **Sélection du sport:** Le script sélectionne le sport spécifié dans `config.json`. Si le sport n'est pas disponible pour la date sélectionnée, le script s'arrêtera avec un message d'erreur. À noter que la réservation pour le volleyball n'est pas disponible pour le moment
 6. **Sélection du créneau horaire:** Le script recherche un créneau horaire correspondant à l'heure spécifiée dans `config.json`. Si l'heure n'est pas disponible, le script s'arrêtera avec un message d'erreur.
 7. **Sélection des partenaires:** Le script sélectionne le premier partenaire de réservation en utilisant le NI fourni dans `config.json`. Si deux autres NI de partenaires supplémentaires sont fournis, le script les sélectionnera également. Si un NI de partenaire est invalide, le script s'arrêtera avec un message d'erreur.
 8. **Confirmation de réservation:** Le script confirme la réservation du terrain.
