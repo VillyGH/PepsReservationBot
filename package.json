@@ -11,6 +11,12 @@
   "author": "WBL",
   "license": "ISC",
   "dependencies": {
-    "puppeteer": "^22.5.0"
+    "@typescript-eslint/eslint-plugin": "^5.54.1",
+    "@typescript-eslint/parser": "^5.54.1",
+    "puppeteer": "^22.5.0",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "eslint-plugin-import": "^2.29.1"
   }
 }

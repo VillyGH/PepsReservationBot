@@ -5,17 +5,9 @@ export async function click(page, selector) {
     }, selector);
 }
 
-export function timeToMs(timeString) {
-    const date = new Date(`1970-01-01T${timeString}Z`);
+export function timeToMs(timeString) : number {
+    const date : Date = new Date(`1970-01-01T${timeString}Z`);
     return date.getTime();
-}
-
-export function getOffset(element) {
-    const rect = element.getBoundingClientRect();
-    return {
-        left: rect.left + window.scrollX,
-        top: rect.top + window.scrollY
-    };
 }
 
 export function findRowIndexWithTime(time, data) {
@@ -27,5 +19,4 @@ export function findRowIndexWithTime(time, data) {
     }
     console.log("The specified reservation hour is not available for that specific date");
     process.exit(1);
-    return null;
 }

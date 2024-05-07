@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
-import config from "./config.json" assert {type: "json"};
-import {click, timeToMs, getOffset, findRowIndexWithTime} from "./utils.js";
+import config from "../config.json" assert {type: "json"};
+import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
 
 
@@ -14,7 +14,7 @@ import { setTimeout } from "timers/promises";
     
     const page = await browser.newPage();
     await page.goto("https://secure.sas.ulaval.ca/rtpeps/Account/Login");
-    await page.setDefaultTimeout(2000);
+    page.setDefaultTimeout(2000);
     await connexion(page);
     await datePage(page);
     await sportsPage(page);
@@ -60,31 +60,25 @@ async function schedulePage(page) {
     console.log("Loading schedule page");
     let selector = 'tr:not(tr[style="display:none;"]):not(.strong)';
     await page.waitForSelector(selector);
-    let data = null;
+    let data : any = null;
     try {
-        data = await page.$$eval(selector, rows => {
-            return Array.from(rows, row => {
-                const columns = row.querySelectorAll('td');
-                return {
-                    location: columns[0].innerText,
-                    time: columns[1].innerText,
-                    terrain: columns[3].innerText,
-                    dataCountdown: columns[4].querySelector('.dataCountdown') ? columns[4].querySelector('.dataCountdown') : null,
-                    btnHref: columns[4].querySelector('.dataCountdown') ? columns[4].querySelector('.linkReserverHide > a').getAttribute("href") : columns[4].querySelector('a').getAttribute("href")
-                };
-            });
+        data = await page.$$eval(selector, (rows : HTMLDivElement[]) => {
+            return getTableScheduleRows(rows);
         });
     } catch (e) {
         console.log("No reservation is available for this day or you already reserved that day");
+        console.log(e)
+        process.exit(1);
     }
-    let index = findRowIndexWithTime(config.date.time, data);
+    let index : number = findRowIndexWithTime(config.date.time, data);
     if(data[index].dataCountdown) {
-        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
-        await setTimeout(timeToMs(data[index].dataCountdown.innerText) - 250);
-        let offset = getOffset(data[index].dataCountdown);
+        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown.innerText}`);
+        await setTimeout(timeToMs(data[index].dataCountdownText) - 250);
+        const countdown = await page.evaluateHandle(() => data[index].dataCountdown);
+        let countdownBox = countdown.boundingBox();
         while(!(await page.$('#radioRaquette2'))) {
             console.log(`click`);
-            clickEvent(offset.left, offset.top);
+            mouseClick(page, countdownBox.width, countdownBox.height);
         }
     } else {
         selector = `a[href='${data[index].btnHref}']`;
@@ -92,16 +86,35 @@ async function schedulePage(page) {
     }
 }
 
-function clickEvent (x, y) {
-    const ev = new MouseEvent('click', {
-        'view': window,
-        'bubbles': true,
-        'cancelable': true,
-        'screenX': x,
-        'screenY': y
+function getTableScheduleRows(rows : HTMLDivElement[]) {
+    return Array.from(rows, (row : HTMLDivElement) => {
+        const columns = row.querySelectorAll('td');
+        return {
+            location: columns[0].innerText,
+            time: columns[1].innerText,
+            terrain: columns[3].innerText,
+            dataCountdown: columns[4].querySelector('.dataCountdown'),
+            btnHref: getBtnHref(columns[4])
+        };
     });
-    const el = document.elementFromPoint(x, y);
-    element.dispatchEvent(ev);
+}
+
+function getBtnHref(column: HTMLTableCellElement) : string | null {
+    if(column.querySelector('.dataCountdown') != null) {
+        let hiddenLink : Element | null = column.querySelector('.linkReserverHide > a')
+        if(hiddenLink) {
+            return hiddenLink.getAttribute("href");
+        }
+        return null;
+    } else {
+        return column[4].querySelector('a').getAttribute("href");
+    }
+}
+
+function mouseClick(page, x, y) {
+    page.mouse.move(x, y);
+    page.mouse.down();
+    page.mouse.up();
 }
 
 async function reservationPage(page) {
@@ -115,18 +128,17 @@ async function reservationPage(page) {
         await selectPartner(page, 2, config.partner_ni3);
     }
     selector = `input:enabled[type="submit"]`;
-    await page.waitForSelector(`input:enabled[type="submit"]`);
-    await page.$eval(selector, element => element.click());
+    await click(page, selector);
     await page.waitForSelector("#bienvenue");
     console.log(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
     process.exit(0);
 }
 
 async function selectPartner(page, partnerId, partnerNI) {
-    let selector = `select[name="ddlPartenaire${partnerId}"]`;
+    let selector : string = `select[name="ddlPartenaire${partnerId}"]`;
     const selectElement = await page.waitForSelector(selector);
-    const options = await selectElement.$$eval('option', options => {
-        return Array.from(options, option => {
+    const options : HTMLOptionElement[] = await selectElement.$$eval('option', (options: HTMLOptionElement[]) => {
+        return Array.from(options, (option: HTMLOptionElement) => {
             return {
                 text: option.textContent,
                 value: option.getAttribute('value'),

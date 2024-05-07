@@ -2,9 +2,16 @@
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.idea/sonarlint/issuestore/7" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/sonarlint/issuestore/b" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/sonarlint/issuestore/c" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/sonarlint/securityhotspotstore/7" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/sonarlint/securityhotspotstore/b" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/sonarlint/securityhotspotstore/c" />
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/user_data" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
