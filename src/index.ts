@@ -1,18 +1,19 @@
-import puppeteer from "puppeteer";
+import puppeteer, {Browser, ElementHandle, Page} from "puppeteer";
 import config from "../config.json" assert {type: "json"};
 import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
+import {OptionElement, ScheduleRows} from "./types";
 
 
-(async () => {
+(async () : Promise<void> => {
     console.log("Starting");
-    const browser = await puppeteer.launch({
+    const browser : Browser = await puppeteer.launch({
         userDataDir: "./user_data",
         headless: !config.affichage,
         args: ["--no-sandbox"],
     });
     
-    const page = await browser.newPage();
+    const page : Page = await browser.newPage();
     await page.goto("https://secure.sas.ulaval.ca/rtpeps/Account/Login");
     page.setDefaultTimeout(2000);
     await connexion(page);
@@ -22,18 +23,18 @@ import { setTimeout } from "timers/promises";
     await reservationPage(page);
 })();
 
-async function connexion(page) {
+async function connexion(page : Page) : Promise<void> {
     console.log("Loading connexion page");
     await page.type("#Email", config.email);
     await page.type("#Password", config.password);
-    let selector = `input[type="submit"]`;
+    let selector : string = `input[type="submit"]`;
     await click(page, selector);
     console.log("Connected");
 }
 
-async function datePage(page) {
+async function datePage(page : Page) : Promise<void> {
     console.log("Loading date page");
-    let selector = "a[href='/rtpeps/Reservation']";
+    let selector : string = "a[href='/rtpeps/Reservation']";
     await click(page, selector);
     selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
     try {
@@ -45,9 +46,9 @@ async function datePage(page) {
     }
 }
 
-async function sportsPage(page) {
+async function sportsPage(page : Page) : Promise<void> {
     console.log("Loading sports page");
-    let selector = `a[href='/rtpeps/Reservation/Disponibilites?selectedActivite=${config.sport}']`;
+    let selector : string = `a[href='/rtpeps/Reservation/Disponibilites?selectedActivite=${config.sport}']`;
     try {
         await click(page, selector);
     } catch (e) {
@@ -56,13 +57,13 @@ async function sportsPage(page) {
     }
 }
 
-async function schedulePage(page) {
+async function schedulePage(page : Page) : Promise<void> {
     console.log("Loading schedule page");
-    let selector = 'tr:not(tr[style="display:none;"]):not(.strong)';
+    let selector : string = 'tr:not(tr[style="display:none;"]):not(.strong)';
     await page.waitForSelector(selector);
-    let data : any = null;
+    let data : ScheduleRows[];
     try {
-        data = await page.$$eval(selector, (rows : HTMLDivElement[]) => {
+        data = await page.$$eval(selector, (rows : Element[]) => {
             return getTableScheduleRows(rows);
         });
     } catch (e) {
@@ -73,8 +74,8 @@ async function schedulePage(page) {
     let index : number = findRowIndexWithTime(config.date.time, data);
     if(data[index].dataCountdown) {
         console.log(`Waiting for the reservation to open in ${data[index].dataCountdown.innerText}`);
-        await setTimeout(timeToMs(data[index].dataCountdownText) - 250);
-        const countdown = await page.evaluateHandle(() => data[index].dataCountdown);
+        await setTimeout(timeToMs(data[index].dataCountdown.innerText) - 250);
+        const countdown : any  = await page.evaluateHandle(() => data[index].dataCountdown);
         let countdownBox = countdown.boundingBox();
         while(!(await page.$('#radioRaquette2'))) {
             console.log(`click`);
@@ -86,9 +87,9 @@ async function schedulePage(page) {
     }
 }
 
-function getTableScheduleRows(rows : HTMLDivElement[]) {
-    return Array.from(rows, (row : HTMLDivElement) => {
-        const columns = row.querySelectorAll('td');
+function getTableScheduleRows(rows : Element[]) : ScheduleRows[] {
+    return Array.from(rows, (row : Element) : ScheduleRows => {
+        const columns : NodeListOf<HTMLTableCellElement> = row.querySelectorAll('td');
         return {
             location: columns[0].innerText,
             time: columns[1].innerText,
@@ -111,15 +112,15 @@ function getBtnHref(column: HTMLTableCellElement) : string | null {
     }
 }
 
-function mouseClick(page, x, y) {
+function mouseClick(page : Page, x : number, y : number) : void {
     page.mouse.move(x, y);
     page.mouse.down();
     page.mouse.up();
 }
 
-async function reservationPage(page) {
+async function reservationPage(page : Page) : Promise<void> {
     console.log("Loading reservation page");
-    let selector = '#radioRaquette2';
+    let selector : string = '#radioRaquette2';
     await page.waitForSelector(selector);
     await selectPartner(page, 0, config.partner_ni1);
     if (config.partner_ni2 && config.partner_ni3) {
@@ -134,21 +135,25 @@ async function reservationPage(page) {
     process.exit(0);
 }
 
-async function selectPartner(page, partnerId, partnerNI) {
+async function selectPartner(page : Page, partnerId : number, partnerNI : string) : Promise<void> {
     let selector : string = `select[name="ddlPartenaire${partnerId}"]`;
-    const selectElement = await page.waitForSelector(selector);
-    const options : HTMLOptionElement[] = await selectElement.$$eval('option', (options: HTMLOptionElement[]) => {
-        return Array.from(options, (option: HTMLOptionElement) => {
-            return {
-                text: option.textContent,
-                value: option.getAttribute('value'),
-            };
+    const selectElement : ElementHandle | null = await page.waitForSelector(selector);
+    if(selectElement) {
+        const options : Array<OptionElement> = await selectElement.$$eval('option', (options: HTMLOptionElement[]) => {
+            return Array.from(options, (option: HTMLOptionElement) : OptionElement => {
+                return {
+                    text: option.textContent,
+                    value: option.getAttribute('value'),
+                };
+            });
         });
-    });
-    const option = options.find(option => option.text.includes(partnerNI));
-    if (option) {
-        await page.select(selector, option.value);
-        await page.waitForSelector(`option[selected="selected"][value="${option.value}"]`)
+        const option : OptionElement | undefined = options.find((option : OptionElement) : boolean | undefined => option.text ? option.text.includes(partnerNI) : undefined);
+        if(option) {
+            if(option.value) {
+                await page.select(selector, option.value);
+                await page.waitForSelector(`option[selected="selected"][value="${option.value}"]`)
+            }
+        }
     } else {
         console.log("Partner(s) NI invalid please check the config.json file");
         process.exit(1);
