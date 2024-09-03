@@ -3,6 +3,7 @@ node_modules/
 screenshots/*
 user_data/
 package-lock.json
+*.js
 
 ### Node template
 # Logs

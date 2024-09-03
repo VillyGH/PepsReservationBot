@@ -2,9 +2,10 @@
   "name": "pepsreservationbot",
   "version": "1.0.0",
   "description": "Programme pour la réservation de plateau sportifs au PEPS de l'Université Laval",
-  "main": "index.js",
+  "main": "src/app.js",
   "scripts": {
-    "run": "node index.js",
+    "start": "npm run build && electron .",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",
@@ -13,10 +14,14 @@
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^5.54.1",
     "@typescript-eslint/parser": "^5.54.1",
+    "electron": "^30.0.9",
     "puppeteer": "^22.5.0",
-    "typescript": "^5.4.5"
+    "puppeteer-core": "^23.2.2",
+    "puppeteer-in-electron": "^3.0.5"
   },
   "devDependencies": {
-    "eslint-plugin-import": "^2.29.1"
+    "@types/node": "^20.12.13",
+    "eslint-plugin-import": "^2.29.1",
+    "typescript": "^5.4.5"
   }
 }

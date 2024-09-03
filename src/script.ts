@@ -4,16 +4,16 @@ import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
 import {OptionElement, ScheduleRows} from "./types";
 
+const browser : Browser = await puppeteer.launch({
+    userDataDir: "./user_data",
+    headless: !config.affichage,
+    args: ["--no-sandbox"],
+});
+const page : Page = await browser.newPage();
 
-(async () : Promise<void> => {
+export const executeScript = async () : Promise<void> => {
     console.log("Starting");
-    const browser : Browser = await puppeteer.launch({
-        userDataDir: "./user_data",
-        headless: !config.affichage,
-        args: ["--no-sandbox"],
-    });
-    
-    const page : Page = await browser.newPage();
+
     await page.goto("https://secure.sas.ulaval.ca/rtpeps/Account/Login");
     page.setDefaultTimeout(2000);
     await connexion(page);
@@ -21,7 +21,11 @@ import {OptionElement, ScheduleRows} from "./types";
     await sportsPage(page);
     await schedulePage(page);
     await reservationPage(page);
-})();
+}
+
+export const stopScript = async () : Promise<void> => {
+    await page.close();
+}
 
 async function connexion(page : Page) : Promise<void> {
     console.log("Loading connexion page");
@@ -35,6 +39,7 @@ async function connexion(page : Page) : Promise<void> {
 async function datePage(page : Page) : Promise<void> {
     console.log("Loading date page");
     let selector : string = "a[href='/rtpeps/Reservation']";
+    await page.screenshot({path: 'screenshot.png'});
     await click(page, selector);
     selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
     try {
@@ -159,6 +164,3 @@ async function selectPartner(page : Page, partnerId : number, partnerNI : string
         process.exit(1);
     }
 }
-
-
-

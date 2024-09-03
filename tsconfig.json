@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "outDir": "/build",
         "module": "esnext",
         "target": "esnext",
         "lib": [
@@ -23,10 +22,10 @@
         "isolatedModules": true,
         "noEmit": false,
         "noImplicitAny": false,
+        "incremental": true,
         "types": [
             "puppeteer",
-            "jest-environment-puppeteer",
-            "expect-puppeteer"
+            "electron"
         ]
     },
     "include": [
@@ -38,7 +37,8 @@
         "src/*.jsx",
         "src/*.tsx",
         "src/*.ts",
-        "src/*.cjs"
+        "src/*.cjs",
+        "src/public/*.ts"
     ],
     "exclude": [
         "./build/**/*"
