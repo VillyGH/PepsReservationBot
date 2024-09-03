@@ -12,6 +12,7 @@ try {
     exit 1
 }
 
+# 70 heures avant la réservation
 $dateTime = $reservationDate + " " + $reservationTime
 $reservationTimeStamp = Get-Date -Date $dateTime
 $executionTimeStamp = $reservationTimeStamp.AddHours(-70).AddSeconds(-30)
@@ -21,6 +22,7 @@ if ((Get-Date) -gt (Get-Date $executionTimeStamp)) {
     Write-Error "Erreur: l'heure d'execution du programme doit être 70 heure avant l'heure de la réservation"
     exit 1
 }
+
 
 $executionTimeStampStr = $executionTimeStamp.ToString()
 $executionTimeStrSplit = $executionTimeStampStr.Split()[0, 1]
