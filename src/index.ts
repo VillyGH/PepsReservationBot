@@ -1,9 +1,10 @@
 import puppeteer, {Browser, ElementHandle, Page} from "puppeteer";
-import config from "../config.json" assert {type: "json"};
+import { readFileSync } from 'fs';
 import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
 import {OptionElement, ScheduleRows} from "./types";
 
+const config = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf-8'));
 
 (async () : Promise<void> => {
     console.log("Starting");
@@ -12,7 +13,7 @@ import {OptionElement, ScheduleRows} from "./types";
         headless: !config.affichage,
         args: ["--no-sandbox"],
     });
-    
+
     const page : Page = await browser.newPage();
     await page.goto("https://secure.sas.ulaval.ca/rtpeps/Account/Login");
     page.setDefaultTimeout(2000);
@@ -57,49 +58,6 @@ async function sportsPage(page : Page) : Promise<void> {
     }
 }
 
-async function schedulePage(page : Page) : Promise<void> {
-    console.log("Loading schedule page");
-    let selector : string = 'tr:not(tr[style="display:none;"]):not(.strong)';
-    await page.waitForSelector(selector);
-    let data : ScheduleRows[];
-    try {
-        data = await page.$$eval(selector, (rows : Element[]) => {
-            return getTableScheduleRows(rows);
-        });
-    } catch (e) {
-        console.log("No reservation is available for this day or you already reserved that day");
-        console.log(e)
-        process.exit(1);
-    }
-    let index : number = findRowIndexWithTime(config.date.time, data);
-    if(data[index].dataCountdown) {
-        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown.innerText}`);
-        await setTimeout(timeToMs(data[index].dataCountdown.innerText) - 250);
-        const countdown : any  = await page.evaluateHandle(() => data[index].dataCountdown);
-        let countdownBox = countdown.boundingBox();
-        while(!(await page.$('#radioRaquette2'))) {
-            console.log(`click`);
-            mouseClick(page, countdownBox.width, countdownBox.height);
-        }
-    } else {
-        selector = `a[href='${data[index].btnHref}']`;
-        await click(page, selector);
-    }
-}
-
-function getTableScheduleRows(rows : Element[]) : ScheduleRows[] {
-    return Array.from(rows, (row : Element) : ScheduleRows => {
-        const columns : NodeListOf<HTMLTableCellElement> = row.querySelectorAll('td');
-        return {
-            location: columns[0].innerText,
-            time: columns[1].innerText,
-            terrain: columns[3].innerText,
-            dataCountdown: columns[4].querySelector('.dataCountdown'),
-            btnHref: getBtnHref(columns[4])
-        };
-    });
-}
-
 function getBtnHref(column: HTMLTableCellElement) : string | null {
     if(column.querySelector('.dataCountdown') != null) {
         let hiddenLink : Element | null = column.querySelector('.linkReserverHide > a')
@@ -112,10 +70,53 @@ function getBtnHref(column: HTMLTableCellElement) : string | null {
     }
 }
 
-function mouseClick(page : Page, x : number, y : number) : void {
-    page.mouse.move(x, y);
-    page.mouse.down();
-    page.mouse.up();
+async function schedulePage(page : Page) : Promise<void> {
+    console.log("Loading schedule page");
+    let selector : string = 'tr:not(tr[style="display:none;"]):not(.strong)';
+    await page.waitForSelector(selector);
+    let data : ScheduleRows[];
+    try {
+        data = await page.$$eval(selector, (rows: Element[]) => {
+            return Array.from(rows, (row : Element) : ScheduleRows => {
+                const columns : NodeListOf<HTMLTableCellElement> = row.querySelectorAll('td');
+                if(columns[4] === undefined) {
+                    throw new Error("reservation non available");
+                }
+                return {
+                    location: columns[0].innerText,
+                    time: columns[1].innerText,
+                    terrain: columns[3].innerText,
+                    dataCountdown: columns[4].querySelector('.dataCountdown'),
+                    btnHref: columns[4].querySelector('.dataCountdown') != null
+                    ? columns[4].querySelector('.linkReserverHide > a')?.getAttribute("href")
+                    : columns[4].querySelector('a')?.getAttribute("href")
+                }
+            });
+        });
+    } catch (e) {
+        console.log("No reservation is available for this day or you already reserved that day");
+        process.exit(1);
+    }
+    let index : number = findRowIndexWithTime(config.date.time, data);
+    if(data[index].dataCountdown) {
+        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown.innerText}`);
+        await setTimeout(timeToMs(data[index].dataCountdown.innerText) - 250);
+        const countdown : any  = await page.evaluateHandle(() => data[index].dataCountdown);
+        let countdownBox = countdown.boundingBox();
+        while(!(await page.$('#radioRaquette2'))) {
+            console.log(`click`);
+            await mouseClick(page, countdownBox.width, countdownBox.height);
+        }
+    } else {
+        selector = `a[href='${data[index].btnHref}']`;
+        await click(page, selector);
+    }
+}
+
+async function mouseClick(page : Page, x : number, y : number) : Promise<void> {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.up();
 }
 
 async function reservationPage(page : Page) : Promise<void> {
@@ -130,7 +131,7 @@ async function reservationPage(page : Page) : Promise<void> {
     }
     selector = `input:enabled[type="submit"]`;
     await click(page, selector);
-    await page.waitForSelector("#bienvenue");
+    await page.waitForSelector(".alert-success");
     console.log(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
     process.exit(0);
 }

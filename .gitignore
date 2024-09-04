@@ -4,6 +4,8 @@ screenshots/*
 user_data/
 package-lock.json
 
+src/*.js
+
 ### Node template
 # Logs
 logs

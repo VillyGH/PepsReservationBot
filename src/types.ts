@@ -8,5 +8,5 @@ export type ScheduleRows = {
     time: string | null,
     terrain: string | null,
     dataCountdown: any,
-    btnHref: string | null
+    btnHref: string | null | undefined
 }

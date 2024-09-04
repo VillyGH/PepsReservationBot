@@ -1,2 +1,2 @@
 @echo off
-node ./src/index.ts
+npm run start
