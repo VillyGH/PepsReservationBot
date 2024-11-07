@@ -29,6 +29,6 @@ $executionTimeStrSplit = $executionTimeStampStr.Split()[0, 1]
 $executionDate = $executionTimeStrSplit[0]
 $executionTime = $executionTimeStrSplit[1]
 
-$schtasksCommand = "schtasks /create /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr $pwd\$scriptName /tn PepsReservationBot"
+$schtasksCommand = "schtasks /create /f /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr $pwd\$scriptName /tn PepsReservationBot"
 Invoke-Expression $schtasksCommand
 Write-Output "Tâche planifiée pour lancer le script PepsReservationBot le $executionTimeStamp"
