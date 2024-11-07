@@ -58,18 +58,6 @@ async function sportsPage(page : Page) : Promise<void> {
     }
 }
 
-function getBtnHref(column: HTMLTableCellElement) : string | null {
-    if(column.querySelector('.dataCountdown') != null) {
-        let hiddenLink : Element | null = column.querySelector('.linkReserverHide > a')
-        if(hiddenLink) {
-            return hiddenLink.getAttribute("href");
-        }
-        return null;
-    } else {
-        return column[4].querySelector('a').getAttribute("href");
-    }
-}
-
 async function schedulePage(page : Page) : Promise<void> {
     console.log("Loading schedule page");
     let selector : string = 'tr:not(tr[style="display:none;"]):not(.strong)';
@@ -82,12 +70,13 @@ async function schedulePage(page : Page) : Promise<void> {
                 if(columns[4] === undefined) {
                     throw new Error("reservation non available");
                 }
+                let dataCountdown : Element | null =  columns[4].querySelector('.dataCountdown');
                 return {
                     location: columns[0].innerText,
                     time: columns[1].innerText,
                     terrain: columns[3].innerText,
-                    dataCountdown: columns[4].querySelector('.dataCountdown'),
-                    btnHref: columns[4].querySelector('.dataCountdown') != null
+                    dataCountdown: dataCountdown ? dataCountdown.innerHTML : null,
+                    btnHref: dataCountdown != null
                     ? columns[4].querySelector('.linkReserverHide > a')?.getAttribute("href")
                     : columns[4].querySelector('a')?.getAttribute("href")
                 }
@@ -98,25 +87,12 @@ async function schedulePage(page : Page) : Promise<void> {
         process.exit(1);
     }
     let index : number = findRowIndexWithTime(config.date.time, data);
-    if(data[index].dataCountdown) {
-        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown.innerText}`);
-        await setTimeout(timeToMs(data[index].dataCountdown.innerText) - 250);
-        const countdown : any  = await page.evaluateHandle(() => data[index].dataCountdown);
-        let countdownBox = countdown.boundingBox();
-        while(!(await page.$('#radioRaquette2'))) {
-            console.log(`click`);
-            await mouseClick(page, countdownBox.width, countdownBox.height);
-        }
-    } else {
-        selector = `a[href='${data[index].btnHref}']`;
-        await click(page, selector);
+    if(data[index].dataCountdown != undefined) {
+        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
+        await setTimeout(timeToMs(data[index].dataCountdown) - 220);
     }
-}
-
-async function mouseClick(page : Page, x : number, y : number) : Promise<void> {
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    await page.mouse.up();
+    let url : string = `https://secure.sas.ulaval.ca/${data[index].btnHref}`;
+    await page.goto(url);
 }
 
 async function reservationPage(page : Page) : Promise<void> {
