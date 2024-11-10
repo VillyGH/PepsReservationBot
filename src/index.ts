@@ -3,6 +3,8 @@ import { readFileSync } from 'fs';
 import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
 import {OptionElement, ScheduleRows} from "./types";
+import {successLogger} from "./logger.js";
+import {errorLogger} from "./logger.js";
 
 const config = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf-8'));
 
@@ -40,9 +42,9 @@ async function datePage(page : Page) : Promise<void> {
     selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
     try {
         await click(page, selector);
-        console.log(`Date found: ${config.date.day}/${config.date.month}/${config.date.year}`);
+        successLogger.info(`Date found: ${config.date.day}/${config.date.month}/${config.date.year}`);
     } catch (e) {
-        console.log("Invalid date, referer to example.json for exact format. The reservation date should be after the current time");
+        errorLogger.error("Invalid date, referer to example.json for exact format. The reservation date should be after the current time");
         process.exit(1);
     }
 }
@@ -53,7 +55,7 @@ async function sportsPage(page : Page) : Promise<void> {
     try {
         await click(page, selector);
     } catch (e) {
-        console.log("The specified sport is not available for that specific date");
+        errorLogger.error("The specified sport is not available for that specific date");
         process.exit(1);
     }
 }
@@ -83,12 +85,12 @@ async function schedulePage(page : Page) : Promise<void> {
             });
         });
     } catch (e) {
-        console.log("No reservation is available for this day or you already reserved that day");
+        errorLogger.error("No reservation is available for this day or you already reserved that day");
         process.exit(1);
     }
     let index : number = findRowIndexWithTime(config.date.time, data);
     if(data[index].dataCountdown != undefined) {
-        console.log(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
+        successLogger.error(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
         await setTimeout(timeToMs(data[index].dataCountdown) - 220);
     }
     let url : string = `https://secure.sas.ulaval.ca/${data[index].btnHref}`;
@@ -108,7 +110,7 @@ async function reservationPage(page : Page) : Promise<void> {
     selector = `input:enabled[type="submit"]`;
     await click(page, selector);
     await page.waitForSelector(".alert-success");
-    console.log(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
+    successLogger.info(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
     process.exit(0);
 }
 
@@ -132,7 +134,7 @@ async function selectPartner(page : Page, partnerId : number, partnerNI : string
             }
         }
     } else {
-        console.log("Partner(s) NI invalid please check the config.json file");
+        errorLogger.error("Partner(s) NI invalid please check the config.json file");
         process.exit(1);
     }
 }

@@ -16,7 +16,9 @@
     "@typescript-eslint/eslint-plugin": "^5.54.1",
     "@typescript-eslint/parser": "^5.54.1",
     "puppeteer": "^22.5.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "winston": "^3.16.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "eslint-plugin-import": "^2.29.1"
