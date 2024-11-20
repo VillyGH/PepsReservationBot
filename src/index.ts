@@ -26,7 +26,7 @@ const config = JSON.parse(readFileSync(new URL('../config.json', import.meta.url
     await reservationPage(page);
 })();
 
-async function connexion(page : Page) : Promise<void> {
+export async function connexion(page : Page) : Promise<void> {
     console.log("Loading connexion page");
     await page.type("#Email", config.email);
     await page.type("#Password", config.password);
@@ -35,7 +35,7 @@ async function connexion(page : Page) : Promise<void> {
     console.log("Connected");
 }
 
-async function datePage(page : Page) : Promise<void> {
+export async function datePage(page : Page) : Promise<void> {
     console.log("Loading date page");
     let selector : string = "a[href='/rtpeps/Reservation']";
     await click(page, selector);
@@ -49,7 +49,7 @@ async function datePage(page : Page) : Promise<void> {
     }
 }
 
-async function sportsPage(page : Page) : Promise<void> {
+export async function sportsPage(page : Page) : Promise<void> {
     console.log("Loading sports page");
     let selector : string = `a[href='/rtpeps/Reservation/Disponibilites?selectedActivite=${config.sport}']`;
     try {
@@ -60,7 +60,7 @@ async function sportsPage(page : Page) : Promise<void> {
     }
 }
 
-async function schedulePage(page : Page) : Promise<void> {
+export async function schedulePage(page : Page) : Promise<void> {
     console.log("Loading schedule page");
     let selector : string = 'tr:not(tr[style="display:none;"]):not(.strong)';
     await page.waitForSelector(selector);
@@ -97,7 +97,7 @@ async function schedulePage(page : Page) : Promise<void> {
     await page.goto(url);
 }
 
-async function reservationPage(page : Page) : Promise<void> {
+export async function reservationPage(page : Page) : Promise<void> {
     console.log("Loading reservation page");
     let selector : string = '#radioRaquette2';
     await page.waitForSelector(selector);
@@ -114,7 +114,7 @@ async function reservationPage(page : Page) : Promise<void> {
     process.exit(0);
 }
 
-async function selectPartner(page : Page, partnerId : number, partnerNI : string) : Promise<void> {
+export async function selectPartner(page : Page, partnerId : number, partnerNI : string) : Promise<void> {
     let selector : string = `select[name="ddlPartenaire${partnerId}"]`;
     const selectElement : ElementHandle | null = await page.waitForSelector(selector);
     if(selectElement) {
