@@ -3,8 +3,8 @@ import { readFileSync } from 'fs';
 import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
 import {OptionElement, ScheduleRows} from "./types";
-import {successLogger} from "./logger.js";
-import {errorLogger} from "./logger.js";
+import {successLogger} from "./loggerTypes.js";
+import {errorLogger} from "./loggerTypes.js";
 
 const config = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf-8'));
 

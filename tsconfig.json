@@ -22,6 +22,10 @@
         "isolatedModules": true,
         "noEmit": false,
         "noImplicitAny": false,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "declaration": true,
+        "sourceMap": true,
         "types": [
             "puppeteer",
         ]
@@ -33,6 +37,11 @@
         "src/**/*.tsx",
         "src/*.tsx",
         "src/*.ts",
-        "src/*.cjs"
+        "src/*.cjs",
+        "tests/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
     ]
 }
