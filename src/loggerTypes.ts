@@ -1,4 +1,3 @@
-// Logging interface for type safety
 import logger from "./logger";
 
 interface LoggerInterface {
@@ -8,7 +7,6 @@ interface LoggerInterface {
     debug(message: string, ...meta: any[]): void;
 }
 
-// Create typed loggers
 export const errorLogger: LoggerInterface = {
     error: (message, ...meta) => logger.error(message, meta),
     warn: (message, ...meta) => logger.warn(message, meta),
