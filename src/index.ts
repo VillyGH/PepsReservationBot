@@ -1,14 +1,16 @@
 import puppeteer, {Browser, ElementHandle, Page} from "puppeteer";
-import { readFileSync } from 'fs';
-import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
+import {click, timeToMs, findRowIndexWithTime} from "./utils";
 import { setTimeout } from "timers/promises";
 import {OptionElement, ScheduleRows} from "./types";
-import {successLogger} from "./loggerTypes.js";
-import {errorLogger} from "./loggerTypes.js";
+import {successLogger} from "./loggerTypes";
+import {errorLogger} from "./loggerTypes";
+import { readFileSync } from 'fs';
+import path from 'path';
 
-const config = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf-8'));
+const configPath : string = path.resolve(__dirname, '../config.json');
+const config = JSON.parse(readFileSync(configPath, 'utf-8'));
 
-(async () : Promise<void> => {
+export async function run() : Promise<void> {
     console.log("Starting");
     const browser : Browser = await puppeteer.launch({
         userDataDir: "./user_data",
@@ -24,7 +26,7 @@ const config = JSON.parse(readFileSync(new URL('../config.json', import.meta.url
     await sportsPage(page);
     await schedulePage(page);
     await reservationPage(page);
-})();
+}
 
 export async function connexion(page : Page) : Promise<void> {
     console.log("Loading connexion page");

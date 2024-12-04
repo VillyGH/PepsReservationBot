@@ -1,4 +1,4 @@
-import logger from "./logger";
+import { logger } from "./logger";
 
 interface LoggerInterface {
     error(message: string, ...meta: any[]): void;

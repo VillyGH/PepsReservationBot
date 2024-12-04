@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "module": "esnext",
-        "target": "esnext",
+        "module": "es2020",
+        "target": "es2020",
         "lib": [
             "dom",
             "dom.iterable",
@@ -28,20 +28,15 @@
         "sourceMap": true,
         "types": [
             "puppeteer",
+            "jest",
+            "node"
         ]
     },
     "include": [
-        "src",
-        "src/index.d.ts",
-        "src/*",
-        "src/**/*.tsx",
-        "src/*.tsx",
-        "src/*.ts",
-        "src/*.cjs",
-        "tests/**/*"
+        "src/**/*.ts",
     ],
     "exclude": [
         "node_modules",
-        "**/*.spec.ts"
+        "dist",
     ]
 }
