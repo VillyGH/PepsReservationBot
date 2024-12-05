@@ -1,10 +1,14 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
     preset: 'ts-jest/presets/default-esm',
-    testEnvironment: 'node',
+    transform: {
+        '^.+\\.(ts|tsx)?$': 'ts-jest',
+        '^.+\\.(js|jsx)$': 'babel-jest',
+    },
     extensionsToTreatAsEsm: ['.ts'],
-    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-    testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+    testEnvironment: 'node',
+    moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+    testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
     verbose: true,
     collectCoverage: true,
     coverageDirectory: 'coverage',

@@ -15,8 +15,10 @@
   "author": "WBL",
   "license": "ISC",
   "dependencies": {
+    "@babel/preset-env": "^7.26.0",
     "@typescript-eslint/eslint-plugin": "^5.54.1",
     "@typescript-eslint/parser": "^5.54.1",
+    "babel-jest": "^29.7.0",
     "puppeteer": "^22.5.0",
     "winston": "^3.16.0",
     "winston-daily-rotate-file": "^5.0.0"

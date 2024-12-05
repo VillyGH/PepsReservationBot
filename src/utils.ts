@@ -24,5 +24,3 @@ export function findRowIndexWithTime(time : string, data : ScheduleRows[]) : num
     console.log("The specified reservation hour is not available for that specific date");
     process.exit(1);
 }
-
-

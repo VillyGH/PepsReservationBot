@@ -1,17 +1,16 @@
 import puppeteer, {Browser, ElementHandle, Page} from "puppeteer";
-import {click, timeToMs, findRowIndexWithTime} from "./utils";
+import {click, timeToMs, findRowIndexWithTime} from "./utils.js";
 import { setTimeout } from "timers/promises";
-import {OptionElement, ScheduleRows} from "./types";
-import {successLogger} from "./loggerTypes";
-import {errorLogger} from "./loggerTypes";
-import { readFileSync } from 'fs';
+import {AppConfig, OptionElement, ScheduleRows} from "./types.js";
+import {infoLogger} from "./loggerTypes.js";
+import {readFileSync} from "fs";
 import path from 'path';
 
-const configPath : string = path.resolve(__dirname, '../config.json');
-const config = JSON.parse(readFileSync(configPath, 'utf-8'));
 
 export async function run() : Promise<void> {
-    console.log("Starting");
+    const configPath : string = path.resolve(process.cwd(), 'config.json');
+    const config : AppConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+    infoLogger.info("Starting");
     const browser : Browser = await puppeteer.launch({
         userDataDir: "./user_data",
         headless: !config.affichage,
@@ -21,49 +20,49 @@ export async function run() : Promise<void> {
     const page : Page = await browser.newPage();
     await page.goto("https://secure.sas.ulaval.ca/rtpeps/Account/Login");
     page.setDefaultTimeout(2000);
-    await connexion(page);
-    await datePage(page);
-    await sportsPage(page);
-    await schedulePage(page);
-    await reservationPage(page);
+    await connexion(page, config);
+    await datePage(page, config);
+    await sportsPage(page, config);
+    await schedulePage(page, config);
+    await reservationPage(page, config);
 }
 
-export async function connexion(page : Page) : Promise<void> {
-    console.log("Loading connexion page");
+export async function connexion(page : Page, config : AppConfig) : Promise<void> {
+    infoLogger.info("Loading connexion page");
     await page.type("#Email", config.email);
     await page.type("#Password", config.password);
     let selector : string = `input[type="submit"]`;
     await click(page, selector);
-    console.log("Connected");
+    infoLogger.info("Connected");
 }
 
-export async function datePage(page : Page) : Promise<void> {
-    console.log("Loading date page");
+export async function datePage(page : Page, config : AppConfig) : Promise<void> {
+    infoLogger.info("Loading date page");
     let selector : string = "a[href='/rtpeps/Reservation']";
     await click(page, selector);
     selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
     try {
         await click(page, selector);
-        successLogger.info(`Date found: ${config.date.day}/${config.date.month}/${config.date.year}`);
+        infoLogger.success(`Date found: ${config.date.day}/${config.date.month}/${config.date.year}`);
     } catch (e) {
-        errorLogger.error("Invalid date, referer to example.json for exact format. The reservation date should be after the current time");
+        infoLogger.error("Invalid date, referer to example.json for exact format. The reservation date should be after the current time");
         process.exit(1);
     }
 }
 
-export async function sportsPage(page : Page) : Promise<void> {
-    console.log("Loading sports page");
+export async function sportsPage(page : Page, config : AppConfig) : Promise<void> {
+    infoLogger.info("Loading sports page");
     let selector : string = `a[href='/rtpeps/Reservation/Disponibilites?selectedActivite=${config.sport}']`;
     try {
         await click(page, selector);
     } catch (e) {
-        errorLogger.error("The specified sport is not available for that specific date");
+        infoLogger.error("The specified sport is not available for that specific date");
         process.exit(1);
     }
 }
 
-export async function schedulePage(page : Page) : Promise<void> {
-    console.log("Loading schedule page");
+export async function schedulePage(page : Page, config : AppConfig) : Promise<void> {
+    infoLogger.info("Loading schedule page");
     let selector : string = 'tr:not(tr[style="display:none;"]):not(.strong)';
     await page.waitForSelector(selector);
     let data : ScheduleRows[];
@@ -87,20 +86,20 @@ export async function schedulePage(page : Page) : Promise<void> {
             });
         });
     } catch (e) {
-        errorLogger.error("No reservation is available for this day or you already reserved that day");
+        infoLogger.error("No reservation is available for this day or you already reserved that day");
         process.exit(1);
     }
     let index : number = findRowIndexWithTime(config.date.time, data);
     if(data[index].dataCountdown != undefined) {
-        successLogger.error(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
+        infoLogger.info(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
         await setTimeout(timeToMs(data[index].dataCountdown) - 220);
     }
     let url : string = `https://secure.sas.ulaval.ca/${data[index].btnHref}`;
     await page.goto(url);
 }
 
-export async function reservationPage(page : Page) : Promise<void> {
-    console.log("Loading reservation page");
+export async function reservationPage(page : Page, config : AppConfig) : Promise<void> {
+    infoLogger.info("Loading reservation page");
     let selector : string = '#radioRaquette2';
     await page.waitForSelector(selector);
     await selectPartner(page, 0, config.partner_ni1);
@@ -112,11 +111,12 @@ export async function reservationPage(page : Page) : Promise<void> {
     selector = `input:enabled[type="submit"]`;
     await click(page, selector);
     await page.waitForSelector(".alert-success");
-    successLogger.info(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
+    infoLogger.success(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
     process.exit(0);
 }
 
 export async function selectPartner(page : Page, partnerId : number, partnerNI : string) : Promise<void> {
+    infoLogger.info(`Selecting partner ${partnerId}`);
     let selector : string = `select[name="ddlPartenaire${partnerId}"]`;
     const selectElement : ElementHandle | null = await page.waitForSelector(selector);
     if(selectElement) {
@@ -136,7 +136,7 @@ export async function selectPartner(page : Page, partnerId : number, partnerNI :
             }
         }
     } else {
-        errorLogger.error("Partner(s) NI invalid please check the config.json file");
+        infoLogger.error("Partner(s) NI invalid please check the config.json file");
         process.exit(1);
     }
 }

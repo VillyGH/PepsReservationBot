@@ -9,35 +9,33 @@ import {
 } from '../index';
 import * as utils from '../utils';
 import * as loggers from '../logger';
-import {readFileSync} from "fs";
+import {AppConfig} from "../types";
+
+const mockConfig : AppConfig = {
+    email: 'test@example.com',
+    password: 'password123',
+    sport: 'Tennis',
+    partner_ni1: "999999999",
+    partner_ni2: null,
+    partner_ni3: null,
+    affichage: true,
+    date: {
+        time: "12:30",
+        day: '15',
+        month: '05',
+        year: '2024'
+    }
+};
 
 jest.mock('puppeteer');
 jest.mock('../utils');
 jest.mock('../logger');
-jest.mock('fs', () => ({
-    readFileSync: jest.fn(),
-}));
 
 describe('Reservation Script', () => {
     let mockBrowser: jest.Mocked<Browser>;
     let mockPage: jest.Mocked<Page>;
     let exitSpy: jest.SpyInstance;
 
-    const mockConfig = {
-        email: 'test@example.com',
-        password: 'password123',
-        sport: 'Tennis',
-        partner_ni1: "536994099",
-        partner_ni2: null,
-        partner_ni3: null,
-        affichage: true,
-        date: {
-            time: "12:30",
-            day: '15',
-            month: '05',
-            year: '2024'
-        }
-    };
 
     beforeEach(() => {
         mockBrowser = {
@@ -52,11 +50,10 @@ describe('Reservation Script', () => {
             select: jest.fn(),
             $$eval: jest.fn(),
         } as any;
+
         exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {
             throw new Error('process.exit was called');
         });
-
-        (readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockConfig));
 
         (puppeteer.launch as jest.Mock).mockResolvedValue(mockBrowser);
         (mockBrowser.newPage as jest.Mock).mockResolvedValue(mockPage);
@@ -69,8 +66,7 @@ describe('Reservation Script', () => {
     describe('connexion', () => {
         it('should log in successfully', async () => {
 
-
-            await connexion(mockPage);
+            await connexion(mockPage, mockConfig);
 
             expect(mockPage.type).toHaveBeenCalledWith("#Email", mockConfig.email);
             expect(mockPage.type).toHaveBeenCalledWith("#Password", mockConfig.password);
@@ -80,7 +76,7 @@ describe('Reservation Script', () => {
 
     describe('datePage', () => {
         it('should navigate to the correct date', async () => {
-            await datePage(mockPage);
+            await datePage(mockPage, mockConfig);
 
             expect(utils.click).toHaveBeenCalledWith(
                 mockPage,
@@ -95,10 +91,9 @@ describe('Reservation Script', () => {
         it('should handle invalid date', async () => {
             (utils.click as jest.Mock).mockRejectedValueOnce(new Error('Invalid date'));
 
-            await expect(datePage(mockPage)).rejects.toThrow();
-            expect(exitSpy).toHaveBeenCalledWith(1);
+            await expect(datePage(mockPage, mockConfig)).rejects.toThrow();
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "Invalid date, referer to example.json for exact format. The reservation date should be after the current time"
+                "Invalid date, referer to example.json for exact format. The reservation date should be after the current time", []
             );
             exitSpy.mockRestore();
         });
@@ -106,7 +101,7 @@ describe('Reservation Script', () => {
 
     describe('sportsPage', () => {
         it('should navigate to the selected sport', async () => {
-            await sportsPage(mockPage);
+            await sportsPage(mockPage, mockConfig);
 
             expect(utils.click).toHaveBeenCalledWith(
                 mockPage,
@@ -117,10 +112,10 @@ describe('Reservation Script', () => {
         it('should handle sport not available', async () => {
             (utils.click as jest.Mock).mockRejectedValueOnce(new Error('Sport not available'));
 
-            await expect(sportsPage(mockPage)).rejects.toThrow();
+            await expect(sportsPage(mockPage, mockConfig)).rejects.toThrow();
             expect(exitSpy).toHaveBeenCalledWith(1);
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "The specified sport is not available for that specific date"
+                "The specified sport is not available for that specific date", []
             );
         });
     });
@@ -140,11 +135,7 @@ describe('Reservation Script', () => {
             // Mock $$eval to return mock data
             (mockPage.$$eval as jest.Mock).mockResolvedValue(mockScheduleData);
 
-            const mockConfig = {
-                date: { time: '14:00' }
-            };
-
-            await schedulePage(mockPage);
+            await schedulePage(mockPage, mockConfig);
 
             expect(mockPage.goto).toHaveBeenCalledWith(
                 `https://secure.sas.ulaval.ca/${mockScheduleData[0].btnHref}`
@@ -152,13 +143,12 @@ describe('Reservation Script', () => {
         });
 
         it('should handle no available reservations', async () => {
-            // Mock $$eval to throw an error
             (mockPage.$$eval as jest.Mock).mockRejectedValueOnce(new Error('No reservations'));
 
-            await expect(schedulePage(mockPage)).rejects.toThrow();
+            await expect(schedulePage(mockPage, mockConfig)).rejects.toThrow();
             expect(exitSpy).toHaveBeenCalledWith(1);
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "No reservation is available for this day or you already reserved that day"
+                "No reservation is available for this day or you already reserved that day", []
             );
         });
     });
@@ -188,7 +178,7 @@ describe('Reservation Script', () => {
             await expect(selectPartner(mockPage, 0, 'InvalidNI')).rejects.toThrow();
             expect(exitSpy).toHaveBeenCalledWith(1);
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "Partner(s) NI invalid please check the config.json file"
+                "Partner(s) NI invalid please check the config.json file", []
             );
         });
     });

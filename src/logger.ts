@@ -19,8 +19,34 @@ export const logFormat = winston.format.combine(
     })
 );
 
+const customLevels = {
+    levels: {
+        error: 0,
+        warn: 1,
+        info: 2,
+        http: 3,
+        verbose: 4,
+        debug: 5,
+        silly: 6,
+        success: 7,
+    },
+    colors: {
+        error: 'red',
+        warn: 'yellow',
+        info: 'blue',
+        http: 'magenta',
+        verbose: 'cyan',
+        debug: 'green',
+        silly: 'gray',
+        success: 'green',
+    },
+};
+
+winston.addColors(customLevels.colors);
+
 export const logger = winston.createLogger({
-    level: 'info',
+    levels: customLevels.levels,
+    level: 'silly',
     format: logFormat,
     defaultMeta: { service: 'reservation-service' },
     transports: [
@@ -32,23 +58,10 @@ export const logger = winston.createLogger({
         }),
 
         new winston.transports.File({
+            level: 'silly',
             filename: path.join(logsDir, 'latest.log'),
-            level: 'error',
-            maxsize: 5242880, // 5MB
+            maxsize: 5242880,
             maxFiles: 5
         }),
-
-        new winston.transports.File({
-            filename: path.join(logsDir, 'combined.log'),
-            maxsize: 5242880, // 5MB
-            maxFiles: 5
-        }),
-
-        new winston.transports.File({
-            filename: path.join(logsDir, 'success.log'),
-            level: 'info',
-            maxsize: 5242880, // 5MB
-            maxFiles: 5
-        })
     ]
 });
