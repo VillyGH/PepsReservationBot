@@ -7,9 +7,10 @@ import {
     reservationPage,
     selectPartner
 } from '../index';
-import * as utils from '../utils';
 import * as loggers from '../logger';
 import {AppConfig} from "../types";
+import FakeTimers from "@sinonjs/fake-timers";
+import {timeToMs} from "../utils";
 
 const mockConfig : AppConfig = {
     email: 'test@example.com',
@@ -27,15 +28,18 @@ const mockConfig : AppConfig = {
     }
 };
 
+jest.mock('timers/promises');
 jest.mock('puppeteer');
-jest.mock('../utils');
 jest.mock('../logger');
+
 
 describe('Reservation Script', () => {
     let mockBrowser: jest.Mocked<Browser>;
     let mockPage: jest.Mocked<Page>;
     let exitSpy: jest.SpyInstance;
-
+    let mockClickElement: jest.Mocked<any>;
+    let mockTimer: jest.Mocked<any>;
+    let clock: any;
 
     beforeEach(() => {
         mockBrowser = {
@@ -48,18 +52,39 @@ describe('Reservation Script', () => {
             click: jest.fn(),
             waitForSelector: jest.fn(),
             select: jest.fn(),
+            $eval: jest.fn(),
             $$eval: jest.fn(),
         } as any;
+        mockClickElement = {
+            click: jest.fn(),
+        } as any;
+        mockTimer = {
+            setTimeout: jest.fn()
+        } as any;
+        clock = FakeTimers.install();
+
+        (mockPage.$eval as jest.Mock)
+            .mockImplementation(async (selector, callback) => {
+                callback(mockClickElement);
+            })
 
         exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {
             throw new Error('process.exit was called');
         });
 
+        jest.spyOn(global, 'setTimeout').mockImplementation((fn, ms) => {
+            if (typeof fn === 'function') fn();
+            return {} as NodeJS.Timeout;
+        });
+
+
         (puppeteer.launch as jest.Mock).mockResolvedValue(mockBrowser);
         (mockBrowser.newPage as jest.Mock).mockResolvedValue(mockPage);
+        (mockTimer.setTimeout as jest.Mock).mockResolvedValue(undefined);
     });
 
     afterEach(() => {
+        clock.uninstall();
         jest.clearAllMocks();
     });
 
@@ -70,7 +95,11 @@ describe('Reservation Script', () => {
 
             expect(mockPage.type).toHaveBeenCalledWith("#Email", mockConfig.email);
             expect(mockPage.type).toHaveBeenCalledWith("#Password", mockConfig.password);
-            expect(utils.click).toHaveBeenCalledWith(mockPage, 'input[type="submit"]');
+            expect(mockPage.$eval).toHaveBeenCalledWith(
+                'input[type="submit"]',
+                expect.any(Function)
+            );
+            expect(mockClickElement.click).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -78,18 +107,20 @@ describe('Reservation Script', () => {
         it('should navigate to the correct date', async () => {
             await datePage(mockPage, mockConfig);
 
-            expect(utils.click).toHaveBeenNthCalledWith(1,
-                mockPage,
-                `a[href='/rtpeps/Reservation']`
+            expect(mockPage.$eval).toHaveBeenNthCalledWith(1,
+                `a[href='/rtpeps/Reservation']`,
+                expect.any(Function)
             );
-            expect(utils.click).toHaveBeenNthCalledWith(2,
-                mockPage,
-                `a[href="/rtpeps/Reservation/Sport?selectedDate=${mockConfig.date.month}%2F${mockConfig.date.day}%2F${mockConfig.date.year}%2000%3A00%3A00"]`
+            expect(mockPage.$eval).toHaveBeenNthCalledWith(2,
+                `a[href="/rtpeps/Reservation/Sport?selectedDate=${mockConfig.date.month}%2F${mockConfig.date.day}%2F${mockConfig.date.year}%2000%3A00%3A00"]`,
+                expect.any(Function)
             );
+
+            expect(mockClickElement.click).toHaveBeenCalledTimes(2);
         });
 
         it('should handle invalid date', async () => {
-            (utils.click as jest.Mock)
+            (mockPage.waitForSelector as jest.Mock)
                 .mockResolvedValueOnce(undefined)
                 .mockRejectedValue(new Error('Invalid date'));
 
@@ -97,7 +128,7 @@ describe('Reservation Script', () => {
             expect(loggers.logger.error).toHaveBeenCalledWith(
                 "Invalid date, referer to example.json for exact format. The reservation date should be after the current time", []
             );
-            exitSpy.mockRestore();
+            expect(mockClickElement.click).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -105,14 +136,14 @@ describe('Reservation Script', () => {
         it('should navigate to the selected sport', async () => {
             await sportsPage(mockPage, mockConfig);
 
-            expect(utils.click).toHaveBeenCalledWith(
-                mockPage,
+            expect(mockPage.waitForSelector).toHaveBeenCalledWith(
                 `a[href='/rtpeps/Reservation/Disponibilites?selectedActivite=${mockConfig.sport}']`
             );
+            expect(mockClickElement.click).toHaveBeenCalledTimes(1);
         });
 
         it('should handle sport not available', async () => {
-            (utils.click as jest.Mock).mockRejectedValueOnce(new Error('Sport not available'));
+            (mockPage.waitForSelector as jest.Mock).mockRejectedValueOnce(new Error('Sport not available'));
 
             await expect(sportsPage(mockPage, mockConfig)).rejects.toThrow();
             expect(exitSpy).toHaveBeenCalledWith(1);
@@ -126,18 +157,18 @@ describe('Reservation Script', () => {
         it('should find the correct time slot', async () => {
             const mockScheduleData = [
                 {
-                    location: 'Court 1',
-                    time: '14:30',
-                    terrain: 'Indoor',
+                    location: '00141',
+                    time: mockConfig.date.time,
+                    terrain: '1',
                     dataCountdown: '00:05:00',
-                    btnHref: '/reservation/slot1'
+                    btnHref: '/rtpeps/Reservation/Reserver/999999'
                 }
             ];
 
-            // Mock $$eval to return mock data
             (mockPage.$$eval as jest.Mock).mockResolvedValue(mockScheduleData);
 
             await schedulePage(mockPage, mockConfig);
+            await clock.tickAsync(timeToMs('00:05:00') - 220);
 
             expect(mockPage.goto).toHaveBeenCalledWith(
                 `https://secure.sas.ulaval.ca/${mockScheduleData[0].btnHref}`
