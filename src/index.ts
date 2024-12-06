@@ -38,10 +38,10 @@ export async function connexion(page : Page, config : AppConfig) : Promise<void>
 
 export async function datePage(page : Page, config : AppConfig) : Promise<void> {
     infoLogger.info("Loading date page");
-    let selector : string = "a[href='/rtpeps/Reservation']";
-    await click(page, selector);
-    selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
     try {
+        let selector : string = "a[href='/rtpeps/Reservation']";
+        await click(page, selector);
+        selector = `a[href="/rtpeps/Reservation/Sport?selectedDate=${config.date.month}%2F${config.date.day}%2F${config.date.year}%2000%3A00%3A00"]`;
         await click(page, selector);
         infoLogger.success(`Date found: ${config.date.day}/${config.date.month}/${config.date.year}`);
     } catch (e) {
@@ -64,9 +64,9 @@ export async function sportsPage(page : Page, config : AppConfig) : Promise<void
 export async function schedulePage(page : Page, config : AppConfig) : Promise<void> {
     infoLogger.info("Loading schedule page");
     let selector : string = 'tr:not(tr[style="display:none;"]):not(.strong)';
-    await page.waitForSelector(selector);
     let data : ScheduleRows[];
     try {
+        await page.waitForSelector(selector);
         data = await page.$$eval(selector, (rows: Element[]) => {
             return Array.from(rows, (row : Element) : ScheduleRows => {
                 const columns : NodeListOf<HTMLTableCellElement> = row.querySelectorAll('td');
@@ -101,16 +101,22 @@ export async function schedulePage(page : Page, config : AppConfig) : Promise<vo
 export async function reservationPage(page : Page, config : AppConfig) : Promise<void> {
     infoLogger.info("Loading reservation page");
     let selector : string = '#radioRaquette2';
-    await page.waitForSelector(selector);
-    await selectPartner(page, 0, config.partner_ni1);
-    if (config.partner_ni2 && config.partner_ni3) {
-        await page.click(selector);
-        await selectPartner(page, 1, config.partner_ni2);
-        await selectPartner(page, 2, config.partner_ni3);
+    try {
+        await page.waitForSelector(selector);
+        await selectPartner(page, 0, config.partner_ni1);
+        if (config.partner_ni2 && config.partner_ni3) {
+            await page.click(selector);
+            await selectPartner(page, 1, config.partner_ni2);
+            await selectPartner(page, 2, config.partner_ni3);
+        }
+        selector = `input:enabled[type="submit"]`;
+        await click(page, selector);
+        await page.waitForSelector(".alert-success");
+    } catch(e) {
+        infoLogger.error("An error has occurred while attempting to make a reservation");
+        process.exit(1);
     }
-    selector = `input:enabled[type="submit"]`;
-    await click(page, selector);
-    await page.waitForSelector(".alert-success");
+
     infoLogger.success(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
     process.exit(0);
 }
