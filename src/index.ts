@@ -124,7 +124,7 @@ export async function reservationPage(page : Page, config : AppConfig) : Promise
         await click(page, selector);
         await page.waitForSelector(".alert-success");
     } catch(e) {
-        infoLogger.error("An error has occurred while attempting to make a reservation" + e);
+        infoLogger.error("An error has occurred while attempting to make a reservation : " + e);
         process.exit(1);
     }
 
