@@ -18,6 +18,7 @@ export async function run() : Promise<void> {
     });
 
     const page : Page = await browser.newPage();
+    infoLogger.info("Connection to https://secure.sas.ulaval.ca/rtpeps/");
     await page.goto("https://secure.sas.ulaval.ca/rtpeps/Account/Login");
     page.setDefaultTimeout(2000);
     await connexion(page, config);
@@ -67,12 +68,17 @@ export async function schedulePage(page : Page, config : AppConfig) : Promise<vo
     let data : ScheduleRows[];
     try {
         await page.waitForSelector(selector);
+        await page.waitForFunction(
+            (selector: string) => {
+                const element = document.querySelector(selector);
+                return element && element.innerHTML.trim() !== '';
+            },
+            {},
+            '.dataCountdown'
+        );
         data = await page.$$eval(selector, (rows: Element[]) => {
             return Array.from(rows, (row : Element) : ScheduleRows => {
                 const columns : NodeListOf<HTMLTableCellElement> = row.querySelectorAll('td');
-                if(columns[4] === undefined) {
-                    throw new Error("reservation non available");
-                }
                 let dataCountdown : Element | null =  columns[4].querySelector('.dataCountdown');
                 return {
                     location: columns[0].innerText,
@@ -96,6 +102,11 @@ export async function schedulePage(page : Page, config : AppConfig) : Promise<vo
     }
     let url : string = `https://secure.sas.ulaval.ca/${data[index].btnHref}`;
     await page.goto(url);
+    selector = "alert alert-warning";
+    if(await page.$(selector)) {
+        infoLogger.error("The reservation is not yet available please try again later");
+        process.exit(1);
+    }
 }
 
 export async function reservationPage(page : Page, config : AppConfig) : Promise<void> {
@@ -113,7 +124,7 @@ export async function reservationPage(page : Page, config : AppConfig) : Promise
         await click(page, selector);
         await page.waitForSelector(".alert-success");
     } catch(e) {
-        infoLogger.error("An error has occurred while attempting to make a reservation");
+        infoLogger.error("An error has occurred while attempting to make a reservation" + e);
         process.exit(1);
     }
 

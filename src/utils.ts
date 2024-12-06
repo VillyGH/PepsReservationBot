@@ -1,6 +1,6 @@
 import {Page} from "puppeteer";
-import {ScheduleRows} from "./types";
-import {infoLogger} from "./loggerTypes";
+import {ScheduleRows} from "./types.js";
+import {infoLogger} from "./loggerTypes.js";
 
 
 export async function click(page : Page, selector : any) : Promise<void> {
