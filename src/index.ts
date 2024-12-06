@@ -46,7 +46,7 @@ export async function datePage(page : Page, config : AppConfig) : Promise<void> 
         await click(page, selector);
         infoLogger.success(`Date found: ${config.date.day}/${config.date.month}/${config.date.year}`);
     } catch (e) {
-        infoLogger.error("Invalid date, referer to example.json for exact format. The reservation date should be after the current time");
+        infoLogger.error("Invalid date, referer to example.json for exact format. The reservation date should be after the current time\n");
         process.exit(1);
     }
 }
@@ -57,7 +57,7 @@ export async function sportsPage(page : Page, config : AppConfig) : Promise<void
     try {
         await click(page, selector);
     } catch (e) {
-        infoLogger.error("The specified sport is not available for that specific date");
+        infoLogger.error("The specified sport is not available for that specific date\n");
         process.exit(1);
     }
 }
@@ -92,19 +92,19 @@ export async function schedulePage(page : Page, config : AppConfig) : Promise<vo
             });
         });
     } catch (e) {
-        infoLogger.error("No reservation is available for this day or you already reserved that day");
+        infoLogger.error("No reservation is available for this day or you already reserved that day\n");
         process.exit(1);
     }
     let index : number = findRowIndexWithTime(config.date.time, data);
     if(data[index].dataCountdown != undefined) {
         infoLogger.info(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
-        await setTimeout(timeToMs(data[index].dataCountdown) - 220);
+        await setTimeout(timeToMs(data[index].dataCountdown) - 1400);
     }
     let url : string = `https://secure.sas.ulaval.ca/${data[index].btnHref}`;
     await page.goto(url);
     selector = "alert alert-warning";
     if(await page.$(selector)) {
-        infoLogger.error("The reservation is not yet available please try again later");
+        infoLogger.error("The reservation is not yet available please try again later\n");
         process.exit(1);
     }
 }
@@ -124,11 +124,11 @@ export async function reservationPage(page : Page, config : AppConfig) : Promise
         await click(page, selector);
         await page.waitForSelector(".alert-success");
     } catch(e) {
-        infoLogger.error("An error has occurred while attempting to make a reservation : " + e);
+        infoLogger.error("An error has occurred while attempting to make a reservation : " + e + "\n");
         process.exit(1);
     }
 
-    infoLogger.success(`Site reserved ! Confirmation has been sent to the address ${config.email}`);
+    infoLogger.success(`Site reserved ! Confirmation has been sent to the address ${config.email}\n`);
     process.exit(0);
 }
 
@@ -153,7 +153,7 @@ export async function selectPartner(page : Page, partnerId : number, partnerNI :
             }
         }
     } else {
-        infoLogger.error("Partner(s) NI invalid please check the config.json file");
+        infoLogger.error("Partner(s) NI invalid please check the config.json file\n");
         process.exit(1);
     }
 }

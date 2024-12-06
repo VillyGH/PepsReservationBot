@@ -51,9 +51,11 @@ describe('Reservation Script', () => {
             type: jest.fn(),
             click: jest.fn(),
             waitForSelector: jest.fn(),
+            waitForFunction: jest.fn(),
             select: jest.fn(),
             $eval: jest.fn(),
             $$eval: jest.fn(),
+            $: jest.fn()
         } as any;
         mockClickElement = {
             click: jest.fn(),
@@ -126,7 +128,7 @@ describe('Reservation Script', () => {
 
             await expect(datePage(mockPage, mockConfig)).rejects.toThrow();
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "Invalid date, referer to example.json for exact format. The reservation date should be after the current time", []
+                "Invalid date, referer to example.json for exact format. The reservation date should be after the current time\n", []
             );
             expect(mockClickElement.click).toHaveBeenCalledTimes(1);
         });
@@ -148,7 +150,7 @@ describe('Reservation Script', () => {
             await expect(sportsPage(mockPage, mockConfig)).rejects.toThrow();
             expect(exitSpy).toHaveBeenCalledWith(1);
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "The specified sport is not available for that specific date", []
+                "The specified sport is not available for that specific date\n", []
             );
         });
     });
@@ -181,7 +183,7 @@ describe('Reservation Script', () => {
             await expect(schedulePage(mockPage, mockConfig)).rejects.toThrow();
             expect(exitSpy).toHaveBeenCalledWith(1);
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "No reservation is available for this day or you already reserved that day", []
+                "No reservation is available for this day or you already reserved that day\n", []
             );
         });
     });
@@ -218,7 +220,7 @@ describe('Reservation Script', () => {
             await expect(selectPartner(mockPage, 0, 'InvalidNI')).rejects.toThrow();
             expect(exitSpy).toHaveBeenCalledWith(1);
             expect(loggers.logger.error).toHaveBeenCalledWith(
-                "Partner(s) NI invalid please check the config.json file", []
+                "Partner(s) NI invalid please check the config.json file\n", []
             );
         });
     });
