@@ -78,18 +78,20 @@ describe('Reservation Script', () => {
         it('should navigate to the correct date', async () => {
             await datePage(mockPage, mockConfig);
 
-            expect(utils.click).toHaveBeenCalledWith(
+            expect(utils.click).toHaveBeenNthCalledWith(1,
                 mockPage,
                 `a[href='/rtpeps/Reservation']`
             );
-            expect(utils.click).toHaveBeenCalledWith(
+            expect(utils.click).toHaveBeenNthCalledWith(2,
                 mockPage,
-                `a[href="/rtpeps/Reservation/Sport?selectedDate=${mockConfig.date.month}%2F${mockConfig.date.day}%2F${mockConfig.date.year}%2B00%3A00%3A00"]`
+                `a[href="/rtpeps/Reservation/Sport?selectedDate=${mockConfig.date.month}%2F${mockConfig.date.day}%2F${mockConfig.date.year}%2000%3A00%3A00"]`
             );
         });
 
         it('should handle invalid date', async () => {
-            (utils.click as jest.Mock).mockRejectedValueOnce(new Error('Invalid date'));
+            (utils.click as jest.Mock)
+                .mockResolvedValueOnce(undefined)
+                .mockRejectedValue(new Error('Invalid date'));
 
             await expect(datePage(mockPage, mockConfig)).rejects.toThrow();
             expect(loggers.logger.error).toHaveBeenCalledWith(
@@ -125,7 +127,7 @@ describe('Reservation Script', () => {
             const mockScheduleData = [
                 {
                     location: 'Court 1',
-                    time: '14:00',
+                    time: '14:30',
                     terrain: 'Indoor',
                     dataCountdown: '00:05:00',
                     btnHref: '/reservation/slot1'
@@ -156,19 +158,26 @@ describe('Reservation Script', () => {
     describe('selectPartner', () => {
         it('should select the correct partner', async () => {
             const mockOptions = [
-                { text: 'John Doe - NI12345', value: '1' },
-                { text: 'Jane Smith - NI67890', value: '2' }
+                { text: 'John Doe 123456789', value: '1' },
+                { text: 'Jane Smith 999999999', value: '2' }
             ];
 
-            // Mock waitForSelector and $$eval
-            (mockPage.waitForSelector as jest.Mock).mockResolvedValue(true);
+            const mockElementHandle = {
+                $$eval: jest.fn().mockImplementation(() => {
+                    return mockOptions;
+                }),
+            };
+
+            (mockPage.waitForSelector as jest.Mock).mockResolvedValue(mockElementHandle);
             (mockPage.$$eval as jest.Mock).mockResolvedValue(mockOptions);
 
-            await selectPartner(mockPage, 0, 'NI12345');
+            await selectPartner(mockPage, 0, '123456789');
 
-            expect(mockPage.select).toHaveBeenCalledWith(
-                'select[name="ddlPartenaire0"]',
-                '1'
+            expect(mockPage.select).toHaveBeenNthCalledWith(1,
+                'select[name="ddlPartenaire0"]', "1"
+            );
+            expect(mockPage.waitForSelector).toHaveBeenNthCalledWith(2,
+                'option[selected="selected"][value="1"]'
             );
         });
 
