@@ -71,7 +71,7 @@ export async function schedulePage(page : Page, config : AppConfig) : Promise<vo
         await page.waitForFunction(
             (selector: string) => {
                 const element = document.querySelector(selector);
-                return element && element.innerHTML.trim() !== '';
+                return element?.innerHTML.trim() !== '' || element?.innerHTML.trim() === null;
             },
             {},
             '.dataCountdown'
@@ -98,7 +98,7 @@ export async function schedulePage(page : Page, config : AppConfig) : Promise<vo
     let index : number = findRowIndexWithTime(config.date.time, data);
     if(data[index].dataCountdown != undefined) {
         infoLogger.info(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
-        await setTimeout(timeToMs(data[index].dataCountdown) - 1400);
+        await setTimeout(timeToMs(data[index].dataCountdown) - 1500);
     }
     let url : string = `https://secure.sas.ulaval.ca/${data[index].btnHref}`;
     await page.goto(url);

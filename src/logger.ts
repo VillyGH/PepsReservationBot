@@ -46,7 +46,7 @@ winston.addColors(customLevels.colors);
 
 export const logger = winston.createLogger({
     levels: customLevels.levels,
-    level: 'silly',
+    level: 'success',
     format: logFormat,
     defaultMeta: { service: 'reservation-service' },
     transports: [
@@ -58,7 +58,7 @@ export const logger = winston.createLogger({
         }),
 
         new winston.transports.File({
-            level: 'silly',
+            level: 'success',
             filename: path.join(logsDir, 'latest.log'),
             maxsize: 5242880,
             maxFiles: 5
