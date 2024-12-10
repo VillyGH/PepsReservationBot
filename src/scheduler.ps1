@@ -1,6 +1,4 @@
 $configFile = "./config.json"
-$scriptName = "run.bat"
-
 
 try {
     $config = Get-Content $configFile -Raw | ConvertFrom-Json
@@ -15,7 +13,7 @@ try {
 # 70 heures avant la réservation
 $dateTime = $reservationDate + " " + $reservationTime
 $reservationTimeStamp = Get-Date -Date $dateTime
-$executionTimeStamp = $reservationTimeStamp.AddHours(-70).AddSeconds(-30)
+$executionTimeStamp = $reservationTimeStamp.AddHours(-70).AddSeconds(-60)
 
 # Vérification si l'heure d'exécution est avant l'heure de réservation
 if ((Get-Date) -gt (Get-Date $executionTimeStamp)) {
@@ -30,5 +28,5 @@ $executionDate = $executionTimeStrSplit[0]
 $executionTime = $executionTimeStrSplit[1]
 
 schtasks /delete /f /tn "PepsReservationBot"
-schtasks /create /f /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr $pwd\$scriptName /tn PepsReservationBot
+schtasks /create /f /ru $ENV:USERNAME /sc once /sd $executionDate /st $executionTime /tr "C:\Users\Willc\Documents\ProjetsPerso\JS\PepsReservationBot\run.exe" /tn PepsReservationBot
 Write-Output "Tâche planifiée pour lancer le script PepsReservationBot le $executionTimeStamp"

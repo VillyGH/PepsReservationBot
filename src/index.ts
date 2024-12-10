@@ -98,11 +98,11 @@ export async function schedulePage(page : Page, config : AppConfig) : Promise<vo
     let index : number = findRowIndexWithTime(config.date.time, data);
     if(data[index].dataCountdown != undefined) {
         infoLogger.info(`Waiting for the reservation to open in ${data[index].dataCountdown}`);
-        await setTimeout(timeToMs(data[index].dataCountdown) - 1500);
+        await setTimeout(timeToMs(data[index].dataCountdown) - 1600);
     }
     let url : string = `https://secure.sas.ulaval.ca/${data[index].btnHref}`;
     await page.goto(url);
-    selector = "alert alert-warning";
+    selector = ".alert-warning";
     if(await page.$(selector)) {
         infoLogger.error("The reservation is not yet available please try again later\n");
         process.exit(1);
